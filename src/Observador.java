@@ -1,4 +1,4 @@
 
-public sealed interface Observador permits Partido{
+public sealed interface Observador permits Partido {
     void update(Subject s);
 }

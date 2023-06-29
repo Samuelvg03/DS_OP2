@@ -1,7 +1,4 @@
 public enum Generación {
-    ALEATORIO(0), CABEZADESERIE(1);
+    ALEATORIO, CABEZADESERIE;
 
-    final int aleatorio;
-
-    Generación(int generación){this.aleatorio = generación;}
 }

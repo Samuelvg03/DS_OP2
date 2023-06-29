@@ -11,8 +11,12 @@ public class ManagerTorneo {
         this.torneosActivos = torneosActivos;
     }
 
-    //Profundidad actual será igual a la profundidad del nodo en el árbol, está en orden inverso, 0 las hojas y profundidad - 1 la raíz.
-    //Identificador será igual al num participantes / 2, generando así un arbol equilibrado.
+    int contador;
+    //Partido resultadoIzquierdo, resultadoDerecho;
+
+
+    //La raíz tendrá el identificador 1, aumentando en uno cada partido a mayores, siendo así 2 y 3 las semifinales
+    //y así sucesivamente. La profundidad será 0 para las hojas e irá aumentando para las ssucesivas fases.
     public Partido crearPartidosTorneo(int identificador, int profundidadActual){
         Partido p = new Partido();
         profundidadActual--;
@@ -24,6 +28,11 @@ public class ManagerTorneo {
             p.getPredecesorParticipante1().attach(p);
             p.setPredecesorParticipante2(crearPartidosTorneo(identificador * 2 + 1, profundidadActual));
             p.getPredecesorParticipante2().attach(p);
+            /*
+            p.setAntecesorParticipante1(crearPartidosTorneo(identificador / 2 , profundidadActual + 1));
+            p.getAntecesorParticipante1().attach(p);
+            p.setAntecesorParticipante2(crearPartidosTorneo(identificador / 2 - 1, profundidadActual + 1));
+            p.getAntecesorParticipante2().attach(p);*/
         }
         return p;
     }
@@ -33,7 +42,7 @@ public class ManagerTorneo {
         if (numJug < 2 || !isPowerOfTwo(numJug)){
             throw new IllegalArgumentException("El número de participantes debe ser una potencia de dos.");
         }
-        int contador = 0;
+        contador = 0;
         while(numJug != 1){
             numJug = numJug/2;
             contador++;
@@ -42,20 +51,20 @@ public class ManagerTorneo {
     }
 
 
-    public void NodosHoja(Partido finalTorneo, List<Partido> lP) {
+    public void nodosHoja(Partido finalTorneo, List<Partido> listPa) {
         if(finalTorneo.getRonda() != 0){
             if(finalTorneo.getPredecesorParticipante1() != null && finalTorneo.getPredecesorParticipante2() != null) {
-                NodosHoja(finalTorneo.getPredecesorParticipante1(), lP);
-                NodosHoja(finalTorneo.getPredecesorParticipante2(), lP);
+                nodosHoja(finalTorneo.getPredecesorParticipante1(), listPa);
+                nodosHoja(finalTorneo.getPredecesorParticipante2(), listPa);
             }else{
                 throw new IllegalArgumentException("Arbol no válido");
             }
         }else {
-            lP.add(finalTorneo);
+            listPa.add(finalTorneo);
         }
     }
 
-    public void asignarJugadores(Generación a, List<Participante> participantes, List<Partido> partidos, Torneo t){
+    public void asignarJugadores(Generación a, List<Participante> participantes, List<Partido> partidos, Torneo torneo){
         GeneraciónUtilizada e = new GeneraciónUtilizada(a);
         e.realizarGeneración(participantes, partidos);
     }
@@ -81,11 +90,11 @@ public class ManagerTorneo {
         }else if(t != null && !(t.getParticipantes().size() == 0)) {
             t.setFinal(crearPartidosTorneo(1, profundidad(t.getParticipantes().size())));
             List<Partido> partidos = new ArrayList<>();
-            NodosHoja(t.getFinal(), partidos);
+            nodosHoja(t.getFinal(), partidos);
             asignarJugadores(a, t.getParticipantes(), partidos, t);
             t.setActivo(true);
         }else if(t == null) {
-            throw new IllegalArgumentException("Torneo no encontrado.");
+            throw new IllegalArgumentException("No existe el torneo.");
         }else{
             throw new IllegalArgumentException("Torneo sin participantes.");
         }
@@ -101,36 +110,71 @@ public class ManagerTorneo {
     }
 
     public Partido buscarPartido(Torneo t, int partido) {
-        return buscarPartidoAuxiliar(t.getFinal(), partido);
+        return buscarAuxiliar(t, t.getFinal(), partido);
     }
 
-    private  Partido buscarPartidoAuxiliar(Partido p, int partido) {
+    public Partido buscarPartido2(Torneo t, int partido){
+        return buscarAuxiliar2(t, t.getFinal(), partido);
+    }
+
+    private Partido buscarAuxiliar2(Torneo t, Partido p, int partido){
         if(p.getId() == partido) {  //Caso de ser la final
             return p;
         }
-        Partido resultadoIzquierdo = buscarPartidoAuxiliar(p.getPredecesorParticipante1(), partido);  //si es un nodo hoja sería nulo?
-        if (resultadoIzquierdo != null) {
-            return resultadoIzquierdo;
-        }
-        Partido resultadoDerecho = buscarPartidoAuxiliar(p.getPredecesorParticipante2(), partido);
-        if (resultadoDerecho != null) {
-            return resultadoDerecho;
+        if(buscarAuxiliar(t, p.getPredecesorParticipante2(), partido) != null){
+            return buscarAuxiliar(t, p.getPredecesorParticipante2(), partido);
         }
         return null;
     }
 
+    private  Partido buscarAuxiliar(Torneo t, Partido p, int partido) {
+        if(p.getId() == partido) {  //Caso de ser la final
+            return p;
+        }
+
+        Partido hijoIzq = p.getPredecesorParticipante1();
+        Partido hijoDer = p.getPredecesorParticipante2();
+        if(hijoIzq.getId() == partido) {
+            return buscarAuxiliar(t, p.getPredecesorParticipante1(), partido);
+        }else{
+            if(hijoDer.getId() == partido){
+                return buscarAuxiliar(t, p.getPredecesorParticipante2(), partido);
+            }else{
+                if (buscarAuxiliar(t, p.getPredecesorParticipante1(), partido) == null &&
+                        (buscarAuxiliar(t, p.getPredecesorParticipante2(), partido) == null)) {
+
+                    return buscarPartido2(t, partido);
+                }else{
+                    return buscarAuxiliar(t, p.getPredecesorParticipante1(), partido);
+                }
+            }
+
+        }
+/*
+        Partido resultadoIzquierdo = buscarAuxiliar(p.getPredecesorParticipante1(), partido);  //si es un nodo hoja sería nulo?
+        if (resultadoIzquierdo != null) {
+            return resultadoIzquierdo;
+        }
+        Partido resultadoDerecho = buscarAuxiliar(p.getPredecesorParticipante2(), partido);
+        if (resultadoDerecho != null) {
+            return resultadoDerecho;
+        }
+*/
+
+    }
+
     public void informacionPartidoTorneo(Torneo t){
         if(t.isActivo()){
-            int iterator = 0;
+            contador = 0;
             Partido p = t.getFinal();
-            imprimirInformacion(p, iterator);
+            imprimirInformacion(p, contador);
         }else{
-            System.out.println("Torneo no empezado.");
+            System.out.println("El torneo no fue inicializado.");
         }
     }
 
-    private void imprimirInformacion(Partido p, int iterator){
-        repetir(iterator);
+    private void imprimirInformacion(Partido p, int contador){
+        repetir(contador);
         switch (p.getFase()){
             case ESPERANDO -> System.out.print("Partido " + p.getId() + ": en espera. Predecesores: {\n");
             case NO_JUGADO -> System.out.print("Partido " + p.getId() + ": preparado, entre " + p.getParticipante1().getName() + " y " + p.getParticipante2().getName()
@@ -140,23 +184,23 @@ public class ManagerTorneo {
                     +  ". Predecesores: {\n");
         }
         if(p.getPredecesorParticipante1() != null){
-            imprimirInformacion(p.getPredecesorParticipante1(), iterator + 1);
-            imprimirInformacion(p.getPredecesorParticipante2(), iterator + 1);
+            imprimirInformacion(p.getPredecesorParticipante1(), contador + 1);
+            imprimirInformacion(p.getPredecesorParticipante2(), contador + 1);
         }else{
-            repetir(iterator + 1);
-            if(p.getParticipante1().getisSeed()){
+            repetir(contador + 1);
+            if(p.getParticipante1().getIsSeed()){
                 System.out.print("\t" + p.getParticipante1().getName() + ", de " + p.getParticipante1().getAge() + " años, cabeza de serie.\n");
             }else{
                 System.out.print("\t" + p.getParticipante1().getName() + ", de " + p.getParticipante1().getAge() + " años.\n");
             }
-            repetir(iterator + 1);
-            if(p.getParticipante2().getisSeed()){
+            repetir(contador + 1);
+            if(p.getParticipante2().getIsSeed()){
                 System.out.print("\t" + p.getParticipante2().getName() + ", de " + p.getParticipante2().getAge() + " años, cabeza de serie.\n");
             }else{
                 System.out.print("\t" + p.getParticipante2().getName() + ", de " + p.getParticipante2().getAge() + " años.\n");
             }
         }
-        repetir(iterator);
+        repetir(contador);
         if(Fase.FINALIZADO == p.getFase()){
             System.out.print("} Ganador: " + p.getGanador().getName() + ". (fin resumen partido " + p.getId() + ")\n");
         }else {
@@ -164,8 +208,8 @@ public class ManagerTorneo {
         }
     }
 
-    private void repetir(int iterator){
-        for(int i = 0; i < iterator; i++){
+    private void repetir(int contador){
+        for(int i = 0; i < contador; i++){
             System.out.print("\t");
         }
     }

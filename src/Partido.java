@@ -2,7 +2,7 @@
 public final class Partido extends Subject implements Observador {
     private int id, ronda = 0;
     private Participante participante1, participante2, ganador;
-    private Partido predecesorParticipante1, predecesorParticipante2;
+    private Partido predecesorParticipante1, predecesorParticipante2, antecesorParticipante1, antecesorParticipante2;
     private Fase fase;
 
     public Partido (){
@@ -30,6 +30,22 @@ public final class Partido extends Subject implements Observador {
 
     public void setPredecesorParticipante2(Partido predecesorParticipante2) {
         this.predecesorParticipante2 = predecesorParticipante2;
+    }
+
+    public Partido getAntecesorParticipante1() {
+        return antecesorParticipante1;
+    }
+
+    public void setAntecesorParticipante1(Partido antecesorParticipante1) {
+        this.antecesorParticipante1 = antecesorParticipante1;
+    }
+
+    public Partido getAntecesorParticipante2() {
+        return antecesorParticipante2;
+    }
+
+    public void setAntecesorParticipante2(Partido antecesorParticipante2) {
+        this.antecesorParticipante2 = antecesorParticipante2;
     }
 
     public Participante getParticipante1() {
@@ -81,7 +97,7 @@ public final class Partido extends Subject implements Observador {
                 case EN_JUEGO -> {
                     this.setFase(Fase.FINALIZADO);
                     setGanador(ganador);
-                    notifyObservers();
+                    notificarObservador();
                 }
             }
         }else{

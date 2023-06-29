@@ -2,9 +2,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class GeneraciónAleatoria implements GenerarCuadros{
+    int x;
+    List<Integer> numeros = new ArrayList<>();
     public void crearPartidos(List<Participante> participantes, List<Partido> partidos){
-        int x = participantes.size()/2;
-        List<Integer> numeros = new ArrayList<>();
+        x = participantes.size()/2;
         for (int i = 0; i < x; i++) {
             int participant1 = (int) (Math.random() * participantes.size());
             int participant2 = (int) (Math.random() * participantes.size());
@@ -20,5 +21,10 @@ public final class GeneraciónAleatoria implements GenerarCuadros{
             partidos.get(i).setParticipante2(participantes.get(participant2));
             partidos.get(i).setFase(Fase.NO_JUGADO);
         }
+    }
+
+    @Override
+    public void realizarGeneración(List<Participante> participantes, List<Partido> partidos) {
+
     }
 }
